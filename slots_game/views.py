@@ -13,6 +13,12 @@ from qiskit.visualization import plot_histogram
 from qiskit_aer import Aer
 from qiskit_aer import AerSimulator
 
+def welcome_view(request):
+    """
+    Vue pour la page d'accueil du site.
+    """
+    return render(request, 'slots_game/welcome.html')
+
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
