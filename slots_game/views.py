@@ -9,6 +9,11 @@ from .forms import CustomUserCreationForm
 from .models import CustomUser # Importez CustomUser
 from .quantum_shuffle import melanger_quantique
 
+from qiskit import QuantumCircuit, transpile
+from qiskit.visualization import plot_histogram
+from qiskit_aer import Aer
+from qiskit_aer import AerSimulator
+
 def register(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
@@ -37,12 +42,33 @@ def slots_game_view(request):
             user.balance -= bet_amount # Déduire le pari
 
             symbols = ["🍒", "🍋", "🍊", "🔔", "⭐", "💎"]
-            result = [random.choice(symbols) for _ in range(3)]
+            
+            qc = QuantumCircuit(3,3)
+
+            qc.h(0)
+            qc.h(1)
+            qc.h(2)
+            qc.measure([0,1,2],[0,1,2])
+
+            sim = AerSimulator()
+            compiled_circuit = transpile(qc,sim)
+            result = sim.run(compiled_circuit, shots=3).result()
+            counts = result.get_counts()
+
+
+            result = []
+
+            for b, freq in counts.items():
+                value = int(b, 2)
+                capped_value = min(value, 5)
+                result.extend([capped_value] * freq)
+          
+
 
             win_multiplier = 0
             if result[0] == result[1] == result[2]:
                 win_multiplier = 5
-            elif result[0] == result[1] or result[1] == result[2]:
+            elif result[0] == result[1] or result[1] == result[2] or result[0] == result[2]:
                 win_multiplier = 2
 
             won_amount = bet_amount * win_multiplier
@@ -54,7 +80,10 @@ def slots_game_view(request):
                 message = f"Félicitations ! Vous avez gagné {won_amount} pièces. Votre nouveau solde est de {user.balance}."
             else:
                 message = f"Dommage ! Votre nouveau solde est de {user.balance}."
-            current_slots = result
+            current_slots = []
+            for i in result:
+                current_slots.append(symbols[i])
+            
 
         return JsonResponse({'message': message, 'balance': user.balance, 'result': current_slots})
 
