@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Blackjack quantique</title>
+    <style>
+        body{font-family:Arial;text-align:center;margin-top:40px;background:#eef9ff}
+        .table{display:inline-block;background:#fff;padding:25px 40px;border-radius:12px;
+               box-shadow:0 4px 12px rgba(0,0,0,0.15)}
+        #balance{font-size:24px;font-weight:bold;color:#0077b6;margin-bottom:15px}
+        #dealer,#player{font-size:30px;margin:10px}
+        button{padding:10px 25px;margin:5px;border:none;border-radius:6px;font-size:18px;cursor:pointer}
+        .bet{background:#28a745;color:#fff}.hit{background:#007bff;color:#fff}.stand{background:#ffc107}
+    </style>
+</head>
+<body>
+<div class="table">
+    <h2>Blackjack – {{ user.username }}</h2>
+    <div id="balance">Solde : {{ user.balance }} pièces</div>
+
+    <div id="dealer">Croupier : -</div>
+    <div id="player">Vous : -</div>
+
+    <div id="bet-box">
+        <input type="number" id="bet" value="10" min="1">
+        <button class="bet" onclick="send('bet')">Parier & Distribuer</button>
+    </div>
+    <div id="action-box" style="display:none">
+        <button class="hit"   onclick="send('hit')">Tirer</button>
+        <button class="stand" onclick="send('stand')">Rester</button>
+    </div>
+
+    <div id="msg" style="margin-top:15px;font-weight:bold;color:#d90429"></div>
+</div>
+
+<script>
+function send(action){
+    const fd = new FormData();
+    fd.append('action', action);
+    if(action === 'bet'){ fd.append('bet', document.getElementById('bet').value); }
+
+    fetch("{% url 'play_blackjack' %}", {
+        method:'POST',
+        headers:{'X-CSRFToken':'{{ csrf_token }}'},
+        body: fd
+    })
+    .then(r => r.json())
+    .then(update)
+    .catch(e => alert("Erreur : "+e));
+}
+
+function update(data){
+    const s = data.state;
+    document.getElementById('balance').innerText = 'Solde : '+data.balance+' pièces';
+
+    document.getElementById('dealer').innerText  = 'Croupier : '+(s.dealer||'-').join(' ');
+    document.getElementById('player').innerText  = 'Vous : '+(s.player||'-').join(' ');
+    document.getElementById('msg').innerText     = s.message||'';
+
+    if(!s.finished){
+        document.getElementById('bet-box').style.display = 'none';
+        document.getElementById('action-box').style.display = 'block';
+    }else{
+        document.getElementById('bet-box').style.display = 'block';
+        document.getElementById('action-box').style.display = 'none';
+    }
+}
+
+send('hit');
+</script>
+</body>
+</html>

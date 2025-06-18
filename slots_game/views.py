@@ -7,6 +7,7 @@ from django.http import JsonResponse
 import random
 from .forms import CustomUserCreationForm
 from .models import CustomUser # Importez CustomUser
+from .quantum_shuffle import melanger_quantique
 
 def register(request):
     if request.method == 'POST':
@@ -58,3 +59,96 @@ def slots_game_view(request):
         return JsonResponse({'message': message, 'balance': user.balance, 'result': current_slots})
 
     return render(request, 'slots_game/game.html', {'user': user, 'message': message, 'current_slots': current_slots})
+
+@login_required
+def blackjack_game_view(request):
+    """
+    - GET  : affiche la page et l’état courant (ou vide)
+    - POST : actions bet / hit / stand (AJAX)
+    L’état est stocké en session sous 'bj_state'.
+    """
+    user = request.user
+
+    # ------- 1) Affichage initial -------
+    if request.method == 'GET':
+        state = request.session.get('bj_state', {})
+        return render(request, 'blackjack_game/game.html',
+                      {'user': user, 'state': state})
+
+    # ------- 2) Appels AJAX -------
+    action = request.POST.get('action')
+    bet    = int(request.POST.get('bet', 0))
+    state  = request.session.get('bj_state', {})
+
+    # (a) Nouvelle mise / distribution
+    if action == 'bet':
+        if bet <= 0 or bet > user.balance:
+            return JsonResponse({'error': 'Mise invalide.'}, status=400)
+
+        deck   = create_deck()
+        player = [deck.pop(), deck.pop()]
+        dealer = [deck.pop(), deck.pop()]
+
+        state = {
+            'deck': deck,
+            'player': player,
+            'dealer': dealer,
+            'bet': bet,
+            'finished': False,
+            'message': '',
+        }
+        user.balance -= bet
+        user.save()
+
+    # (b) Tirer
+    elif action == 'hit' and not state.get('finished', True):
+        state['player'].append(state['deck'].pop())
+        if hand_value(state['player']) > 21:
+            state['finished'] = True
+            state['message']  = 'Bust ! Vous dépassez 21.'
+
+    # (c) Rester
+    elif action == 'stand' and not state.get('finished', True):
+        while hand_value(state['dealer']) < 17:
+            state['dealer'].append(state['deck'].pop())
+
+        p_val = hand_value(state['player'])
+        d_val = hand_value(state['dealer'])
+        state['finished'] = True
+
+        if d_val > 21 or p_val > d_val:
+            gain = state['bet'] * 2
+            user.balance += gain
+            state['message'] = f'Vous gagnez {gain} pièces !'
+        elif p_val == d_val:
+            user.balance += state['bet']
+            state['message'] = 'Égalité – mise rendue.'
+        else:
+            state['message'] = 'Le croupier gagne.'
+
+        user.save()
+
+    request.session['bj_state'] = state
+    request.session.modified = True
+    return JsonResponse({'state': state, 'balance': user.balance})
+
+def create_deck():
+    valeurs  = ['2','3','4','5','6','7','8','9','10','J','Q','K','A']
+    couleurs = ['♠','♥','♦','♣']
+    deck = [f"{v}{c}" for v in valeurs for c in couleurs]
+    deck = melanger_quantique(deck)
+    return deck
+
+
+def hand_value(hand):
+    """Calcule la valeur (avec gestion des As = 1 ou 11)."""
+    valeur_carte = {
+        **{str(n): n for n in range(2, 11)},
+        'J': 10, 'Q': 10, 'K': 10, 'A': 11,
+    }
+    total = sum(valeur_carte[c[:-1]] for c in hand)
+    nb_aces = sum(1 for c in hand if c.startswith('A'))
+    while total > 21 and nb_aces:
+        total -= 10
+        nb_aces -= 1
+    return total

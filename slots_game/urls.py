@@ -10,4 +10,5 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(next_page='/'), name='logout'),
     path('', views.slots_game_view, name='home'), # Page d'accueil du jeu
     path('play_slots/', views.slots_game_view, name='play_slots'), # Endpoint pour le jeu via AJAX
+    path('play_blackjack/', views.blackjack_game_view, name='play_blackjack'),
 ]
