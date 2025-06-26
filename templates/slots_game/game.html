@@ -84,6 +84,7 @@
 
         <p id="message">{{ message }}</p>
 
+        <a href="{% url 'home' %}" class="action-link">Retour à l'accueil</a> {# Added 'home' URL here #}
         <a href="{% url 'logout' %}" class="logout-link">Se déconnecter</a>
     </div>
 

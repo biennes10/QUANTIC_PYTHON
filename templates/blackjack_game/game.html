@@ -107,15 +107,15 @@
             color: #555;
         }
 
-        .logout-link {
-            margin-top: 25px;
+        .action-link { /* Modified class name to be more generic for both links */
+            margin-top: 15px; /* Adjust margin as needed */
             display: block;
             font-size: 1em;
             color: #007bff;
             text-decoration: none;
         }
 
-        .logout-link:hover {
+        .action-link:hover {
             text-decoration: underline;
         }
 
@@ -147,7 +147,7 @@
                 font-size: 1.2em;
             }
 
-            .logout-link {
+            .action-link {
                 font-size: 1.1em;
             }
         }
@@ -187,18 +187,15 @@
             {% csrf_token %}
 
             {% if not player_cards %}
-                <!-- Nouvelle partie : champ mise + bouton -->
                 <label for="bet">Miser : </label>
                 <input type="number" name="bet" id="bet" min="1" max="{{ user.balance }}" placeholder="Mise" value="10" required>
                 <button type="submit" name="action" value="bet">Nouvelle partie</button>
 
             {% elif not state.finished %}
-                <!-- Partie en cours -->
                 <button type="submit" name="action" value="hit">Tirer</button>
                 <button type="submit" name="action" value="stand">Rester</button>
 
             {% else %}
-                <!-- Partie finie -->
                 <label for="bet">Miser : </label>
                 <input type="number" name="bet" id="bet" min="1" max="{{ user.balance }}" placeholder="Mise" value="10" required>
                 <button type="submit" name="action" value="bet">Nouvelle partie</button>
@@ -207,7 +204,8 @@
 
         <p id="message">{{ message }}</p>
 
-        <a href="{% url 'logout' %}" class="logout-link">Se déconnecter</a>
+        <a href="{% url 'home' %}" class="action-link">Retour à l'accueil</a> {# Added 'home' URL here #}
+        <a href="{% url 'logout' %}" class="action-link">Se déconnecter</a>
     </div>
 </body>
 </html>
