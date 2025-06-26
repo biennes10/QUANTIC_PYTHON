@@ -13,6 +13,27 @@ from qiskit.visualization import plot_histogram
 from qiskit_aer import Aer
 from qiskit_aer import AerSimulator
 
+def getNombreSlots():
+    nombre = 6
+    while nombre > 5:
+        qc = QuantumCircuit(3,3)
+
+        qc.h(0)
+        qc.h(1)
+        qc.h(2)
+        qc.measure([0,1,2],[0,1,2])
+
+        sim = AerSimulator()
+        compiled_circuit = transpile(qc,sim)
+        result = sim.run(compiled_circuit, shots=1).result()
+        counts = result.get_counts()
+        binary_result = list(counts.keys())[0]  # Récupère la clé, par exemple '111'
+        nombre = int(binary_result, 2)  # Convertit en base 10
+        if nombre <= 5:
+            return nombre
+
+
+
 def welcome_view(request):
     """
     Vue pour la page d'accueil du site.
@@ -46,28 +67,12 @@ def slots_game_view(request):
         else:
             user.balance -= bet_amount # Déduire le pari
 
-            symbols = ["🍒", "🍋", "🍊", "🔔", "⭐", "💎"]
-            
-            qc = QuantumCircuit(3,3)
-
-            qc.h(0)
-            qc.h(1)
-            qc.h(2)
-            qc.measure([0,1,2],[0,1,2])
-
-            sim = AerSimulator()
-            compiled_circuit = transpile(qc,sim)
-            result = sim.run(compiled_circuit, shots=3).result()
-            counts = result.get_counts()
-
+            symbols = ["🍒", "🍋", "🍊", "🔔", "⭐", "💎"]  
 
             result = []
 
-            for b, freq in counts.items():
-                value = int(b, 2)
-                capped_value = min(value, 5)
-                result.extend([capped_value] * freq)
-          
+            for i in range(3):
+                result.append(getNombreSlots())
 
 
             win_multiplier = 0
