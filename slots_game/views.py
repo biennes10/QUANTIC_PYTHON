@@ -14,6 +14,33 @@ from qiskit import QuantumCircuit, transpile
 from qiskit_aer import AerSimulator
 # ------------------------------------------------------------
 
+def getNombreSlots():
+    nombre = 6
+    while nombre > 5:
+        qc = QuantumCircuit(3,3)
+
+        qc.h(0)
+        qc.h(1)
+        qc.h(2)
+        qc.measure([0,1,2],[0,1,2])
+
+        sim = AerSimulator()
+        compiled_circuit = transpile(qc,sim)
+        result = sim.run(compiled_circuit, shots=1).result()
+        counts = result.get_counts()
+        binary_result = list(counts.keys())[0]  # Récupère la clé, par exemple '111'
+        nombre = int(binary_result, 2)  # Convertit en base 10
+        if nombre <= 5:
+            return nombre
+
+
+
+def welcome_view(request):
+    """
+    Vue pour la page d'accueil du site.
+    """
+    return render(request, 'slots_game/welcome.html')
+
 # ------------------------------------------------------------------
 #  I.  INSCRIPTION / CONNEXION
 # ------------------------------------------------------------------
@@ -48,28 +75,14 @@ def slots_game_view(request):
         else:
             user.balance -= bet_amount
 
-            # ---------- tirage quantique : 3 qubits ----------
-            symbols = ["🍒", "🍋", "🍊", "🔔", "⭐", "💎"]
+            symbols = ["🍒", "🍋", "🍊", "🔔", "⭐", "💎"]  
 
-            qc = QuantumCircuit(3, 3)
-            qc.h([0, 1, 2])
-            qc.measure([0, 1, 2], [0, 1, 2])
+            result = []
 
-            sim = AerSimulator()
-            compiled = transpile(qc, sim)
-            result = sim.run(compiled, shots=3).result()
-            counts = result.get_counts()
+            for i in range(3):
+                result.append(getNombreSlots())
 
-            values = []
-            for bits, freq in counts.items():
-                v = int(bits, 2)
-                v = min(v, 5)           # cap sur 0-5
-                values.extend([v] * freq)
 
-            current_slots = [symbols[i] for i in values[:3]]
-            # -------------------------------------------------
-
-            # calcul gains
             win_multiplier = 0
             if current_slots[0] == current_slots[1] == current_slots[2]:
                 win_multiplier = 5
