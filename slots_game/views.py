@@ -77,10 +77,10 @@ def slots_game_view(request):
 
             symbols = ["🍒", "🍋", "🍊", "🔔", "⭐", "💎"]  
 
-            result = []
+            current_slots = []
 
             for i in range(3):
-                result.append(getNombreSlots())
+                current_slots.append(getNombreSlots())
 
 
             win_multiplier = 0
@@ -88,6 +88,11 @@ def slots_game_view(request):
                 win_multiplier = 5
             elif len(set(current_slots)) == 2:  # une paire
                 win_multiplier = 2
+
+            symbols_result = []
+
+            for slot in current_slots:
+                symbols_result.append(symbols[slot])
 
             won_amount = bet_amount * win_multiplier
             user.balance += won_amount
@@ -101,7 +106,7 @@ def slots_game_view(request):
 
         return JsonResponse({'message': message,
                              'balance': user.balance,
-                             'result': current_slots})
+                             'result': symbols_result})
 
     return render(request, 'slots_game/game.html',
                   {'user': user,
