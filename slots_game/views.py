@@ -134,14 +134,31 @@ def blackjack_game_view(request):
                 user.save()
 
                 deck = create_deck()
+                player = [deck.pop(), deck.pop()]
+                dealer = [deck.pop(), deck.pop()]
+                p_val = hand_value(player)
+                d_val = hand_value(dealer)
+
                 state = {
                     'deck': deck,
-                    'player': [deck.pop(), deck.pop()],
-                    'dealer': [deck.pop(), deck.pop()],
+                    'player': player,
+                    'dealer': dealer,
                     'finished': False,
                     'message': '',
                     'bet': bet,
                 }
+
+                # Gestion du Blackjack naturel
+                if p_val == 21:
+                    state['finished'] = True
+                    if d_val == 21:
+                        user.balance += bet
+                        state['message'] = "Blackjack pour les deux ! Égalité."
+                    else:
+                        gain = int(2.5 * bet)
+                        user.balance += bet + gain
+                        state['message'] = f"Blackjack naturel ! Vous gagnez {gain} pièces 🎉"
+                    user.save()
 
         # Tirer une carte
         elif action == 'hit' and not state.get('finished', True):
@@ -182,7 +199,6 @@ def blackjack_game_view(request):
         'message': state.get('message', ''),
         'state': state,
     })
-
 
 # ------------------------------------------------------------------
 #  UTILITAIRES BLACKJACK

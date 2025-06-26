@@ -201,14 +201,14 @@
         </a>
 
         {# Carte pour le black jack (Désactivé) #}
-        <a href="#" class="game-card disabled">
+        <a href="{% url 'play_blackjack' %}" class="game-card">
             <div class="game-image-container">
                 <img src="{% static 'slots_game/blackjack.png' %}" alt="Jeu de Blackjack" class="game-image">
             </div>
             <div class="game-info">
                 <h2>Blackjack</h2>
                 <p>Affrontez la banque dans ce classique du casino.</p>
-                <span class="play-button">Bientôt disponible</span>
+                <span class="play-button">Jouer</span>
             </div>
         </a>
 
